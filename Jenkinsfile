@@ -16,7 +16,11 @@ pipeline {
         stage('Install') {
             steps {
                 dir(env.BUILD_DIR) {
-                    sh 'npm ci'
+                    sh '''
+                        echo "Installing dependencies..."
+                        # Use install instead of ci for lockfile compatibility
+                        npm install --no-audit --no-fund
+                    '''
                 }
             }
         }
@@ -50,6 +54,7 @@ pipeline {
                         docker run -d --name ${CONTAINER_NAME} -p ${PORT}:${PORT} ${IMAGE_NAME}
                         sleep 3
                         curl -f http://localhost:${PORT}/health
+                        echo "\nContainer logs:"
                         docker logs ${CONTAINER_NAME}
                     '''
                 }
@@ -67,6 +72,7 @@ pipeline {
     post {
         success {
             echo "✅ Health API deployed successfully!"
+            echo "Service running at: http://localhost:${PORT}/health"
         }
         failure {
             echo "❌ Deployment failed"
